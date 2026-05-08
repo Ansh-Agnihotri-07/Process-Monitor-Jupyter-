@@ -246,5 +246,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## ✍️ Author
 
-**Ansh Agnihotri**  
+**Ansh Agnihotri and GAUTAM RANA**  
 Project Link: [Process-Monitor-Jupyter-](https://github.com/Ansh-Agnihotri-07/Process-Monitor-Jupyter-)
