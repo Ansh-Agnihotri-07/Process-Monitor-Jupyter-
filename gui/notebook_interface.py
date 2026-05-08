@@ -93,6 +93,7 @@ __all__ = [
     "fetch_processes",
     "processes_to_dataframe",
     "filter_processes",
+    "group_processes",
     "sort_processes",
     "display_processes",
     "live_monitor",
@@ -127,10 +128,10 @@ def processes_to_dataframe(
 ) -> pd.DataFrame:
     """Convert a list of process dicts into a pandas DataFrame.
 
-    Columns: PID, Name, Status, CPU, Memory
+    Columns: PID, Name, Status, Priority, CPU, Memory
     """
     if not processes:
-        return pd.DataFrame(columns=["PID", "Name", "Status", "CPU", "Memory"])
+        return pd.DataFrame(columns=["PID", "Name", "Status", "Priority", "CPU", "Memory"])
 
     rows = []
     for p in processes:
@@ -139,6 +140,7 @@ def processes_to_dataframe(
                 "PID": int(p.get("pid", 0)),
                 "Name": str(p.get("name", "")),
                 "Status": str(p.get("state", "")),
+                "Priority": str(p.get("priority", "Normal")),
                 "CPU": float(p.get("cpu", 0.0)),
                 "Memory": float(p.get("memory", 0.0)),
             }
@@ -167,6 +169,28 @@ def filter_processes(df: pd.DataFrame) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
+# ── 3.5 Group Data ───────────────────────────────────────────────────
+def group_processes(df: pd.DataFrame) -> pd.DataFrame:
+    """Group processes by name, summing CPU and Memory, and collecting PIDs."""
+    if df.empty:
+        return df
+
+    # We want to aggregate CPU, Memory, and collect PIDs.
+    # For PID, we can keep the first one as a reference, or create a PIDs list.
+    def agg_funcs(x):
+        d = {}
+        d['PIDs'] = list(x['PID'])
+        d['PID'] = list(x['PID'])[0] # main PID
+        d['Status'] = list(x['Status'])[0]
+        d['Priority'] = list(x['Priority'])[0]
+        d['CPU'] = x['CPU'].sum()
+        d['Memory'] = x['Memory'].sum()
+        return pd.Series(d)
+
+    grouped = df.groupby('Name', as_index=False).apply(agg_funcs)
+    return grouped.reset_index(drop=True)
+
+
 # ── 4. Sort Data ─────────────────────────────────────────────────────
 def sort_processes(df: pd.DataFrame) -> pd.DataFrame:
     """Sort processes by CPU usage in descending order."""
@@ -189,8 +213,21 @@ def _style_dataframe(df: pd.DataFrame) -> Any:
             return ["background-color: #b8860b; color: white"] * len(row)
         return [""] * len(row)
 
+    # Format PIDs if it exists
+    def format_pids(pids):
+        if isinstance(pids, list):
+            if len(pids) == 1:
+                return str(pids[0])
+            return f"{pids[0]}, ... ({len(pids)} total)"
+        return str(pids)
+
+    # Make a copy to avoid SettingWithCopyWarning
+    disp_df = df.copy()
+    if 'PIDs' in disp_df.columns:
+        disp_df['PIDs'] = disp_df['PIDs'].apply(format_pids)
+        
     styled = (
-        df.style
+        disp_df.style
         .apply(_highlight_high_cpu, axis=1)
         .format({"CPU": "{:.1f}%", "Memory": "{:.1f} MB"})
         .set_properties(**{
@@ -239,6 +276,7 @@ def display_processes() -> None:
     processes = fetch_processes()
     df = processes_to_dataframe(processes)
     df = filter_processes(df)
+    df = group_processes(df)
     df = sort_processes(df)
 
     if _HAS_IPYTHON:

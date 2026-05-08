@@ -22,6 +22,7 @@ void handleList() {
         std::cout << " {\"pid\":" << p.pid
                   << ",\"name\":\"" << p.name << "\""
                   << ",\"state\":\"" << p.state << "\""
+                  << ",\"priority\":\"" << p.priority << "\""
                   << ",\"cpu\":" << std::fixed << std::setprecision(1) << p.cpu
                   << ",\"memory\":" << std::fixed << std::setprecision(1) << p.memory
                   << "}";

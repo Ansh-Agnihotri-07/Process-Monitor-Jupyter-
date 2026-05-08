@@ -493,6 +493,7 @@ class BackendBridge:
                     "pid": int(entry.get("pid", 0)),
                     "name": str(entry.get("name", "")),
                     "state": str(entry.get("state", "")),
+                    "priority": str(entry.get("priority", "Normal")),
                     "cpu": float(entry.get("cpu", 0.0)),
                     "memory": float(entry.get("memory", 0.0)),
                 }

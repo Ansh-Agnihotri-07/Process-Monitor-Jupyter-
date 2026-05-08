@@ -103,6 +103,7 @@ std::vector<Process> listProcesses()
             p.state = "Running";
             p.cpu = 0.0f;
             p.memory = 0.0f;
+            p.priority = "Normal";
 
             HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, p.pid);
             if (!hProcess)
@@ -111,6 +112,14 @@ std::vector<Process> listProcesses()
             }
             if (hProcess)
             {
+                DWORD prioClass = GetPriorityClass(hProcess);
+                if (prioClass == IDLE_PRIORITY_CLASS) p.priority = "Idle";
+                else if (prioClass == BELOW_NORMAL_PRIORITY_CLASS) p.priority = "Below Normal";
+                else if (prioClass == NORMAL_PRIORITY_CLASS) p.priority = "Normal";
+                else if (prioClass == ABOVE_NORMAL_PRIORITY_CLASS) p.priority = "Above Normal";
+                else if (prioClass == HIGH_PRIORITY_CLASS) p.priority = "High";
+                else if (prioClass == REALTIME_PRIORITY_CLASS) p.priority = "Realtime";
+
                 PROCESS_MEMORY_COUNTERS pmc;
                 if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
                 {

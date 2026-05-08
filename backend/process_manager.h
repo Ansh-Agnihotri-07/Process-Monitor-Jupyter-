@@ -10,6 +10,7 @@ struct Process {
     std::string state;
     float cpu;
     float memory;
+    std::string priority;
 };
 
 std::vector<Process> listProcesses();
